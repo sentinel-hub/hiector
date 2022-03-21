@@ -1,0 +1,83 @@
+# A configuration of ray cluster for Query Planet CCN3 project
+# For info about parameters check https://docs.ray.io/en/latest/cluster/config.html#full-configuration
+
+cluster_name: hiector-cluster
+
+max_workers: 20  # Max number of worker instances
+upscaling_speed: 1.0
+idle_timeout_minutes: 5
+
+docker:
+    image: "<AWS user id>.dkr.ecr.eu-central-1.amazonaws.com/<docker image name>"  # Edit this!
+    container_name: "hiector_container"
+    pull_before_run: True
+    run_options:
+        - --privileged  # Because of s3fs-fuse
+
+provider:
+    type: aws
+    region: eu-central-1
+    availability_zone: eu-central-1a,eu-central-1b,eu-central-1c
+    cache_stopped_nodes: False  # Change for terminating instances
+
+auth:
+    ssh_user: ubuntu
+
+available_node_types:
+    ray.head:
+        min_workers: 0
+        max_workers: 0
+        node_config:
+            InstanceType: m5.2xlarge
+            ImageId: ami-<id of your AMI>  # Edit this!
+            BlockDeviceMappings:
+                - DeviceName: /dev/sda1
+                  Ebs:
+                      VolumeSize: 20
+        resources: {"CPU": 1}
+    ray.worker:
+        min_workers: 0
+        max_workers: 20  # Max number of workers of this type
+        node_config:
+            InstanceType: m5.xlarge
+            ImageId: ami-<id of your AMI>  # Edit this!
+            InstanceMarketOptions:
+                MarketType: spot
+            BlockDeviceMappings:
+                - DeviceName: /dev/sda1
+                  Ebs:
+                    VolumeSize: 20
+#        resources: {"CPU": 1}
+
+head_node_type: ray.head
+
+file_mounts: {}
+cluster_synced_files: []
+file_mounts_sync_continuously: False
+rsync_exclude:
+    - "**/.git"
+    - "**/.git/**"
+rsync_filter:
+    - ".gitignore"
+
+initialization_commands:
+    - aws ecr get-login-password | docker login --username AWS --password-stdin <AWS user id>.dkr.ecr.eu-central-1.amazonaws.com
+
+setup_commands:
+    - s3fs <AWS S3 bucket name> ~/data -o umask=0000 | true
+
+head_setup_commands:
+    - pip install jupyter
+
+worker_setup_commands: []
+
+head_start_ray_commands:
+    - ray stop
+    - ulimit -n 65536; ray start --head --port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml
+
+worker_start_ray_commands:
+    - ray stop
+    - ulimit -n 65536; ray start --address=$RAY_HEAD_IP:6379 --object-manager-port=8076
+
+head_node: {}
+worker_nodes: {}

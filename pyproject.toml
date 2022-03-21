@@ -1,0 +1,10 @@
+[tool.black]
+line-length = 120
+preview = true
+
+[tool.isort]
+profile = "black"
+known_first_party = ["sentinelhub", "eolearn"]
+known_absolute = "hiector"
+sections = ["FUTURE","STDLIB","THIRDPARTY","FIRSTPARTY","ABSOLUTE","LOCALFOLDER"]
+line_length = 120

@@ -1,0 +1,145 @@
+{   
+    "prepare_eopatch": {
+        "data_dir": "<s3-path-to-pleiades-eopatches-dir/>",
+        "tmp_dir": "<s3-path-to-tmp-dir/>",
+        "out_dir": "<s3-path-to-dir-with-pleiades-training-data/>",
+        "grid_file": "<s3-path-to-pleiades-metadata-gpkg-file>",
+        "logs_dir": "<local-log-dir/>",
+        "aws_profile": "<aws_s3_profile_name>",
+        "bands_feature": "bands",
+        "bands": [0, 1, 2, 3],
+        "data_mask_feature": "mask",
+        "no_data_value": 0,
+        "reference_feature": "<reference>",
+        "valid_reference_mask_feature": "<has_ref>",
+        "cropped_grid_feature": "PATCHLETS",
+        "bbox_type": "obb",
+        "resolution": 0.5,
+        "scale_sizes": [128, 256, 512],
+        "valid_thr": 0.6,
+        "overlap": 0.25,
+        "workers": 8,
+        "use_ray": false
+    },
+    "select-data": {
+        "data_dir": "<s3-path-to-dir-with-pleiades-training-data/>",
+        "input_dataframe_filename": "<pleiades-metadata.gpkg>",
+        "output_dataframe_filename": "<pleiades-metadata-training-ready.gpkg>",
+        "aws_profile": "<aws_s3_profile_name>",
+        "query": "(N_BBOXES > 0) & (VALID_DATA_RATIO>0.6)",
+        "frac": 1, 
+        "exlude_eops": null,
+        "fraction_train": 0.8, 
+        "fraction_test": 0.1, 
+        "fraction_val": 0.1,
+        "scale_sizes": [128, 256, 512],
+        "seed": 42
+    },
+    "compute_norm_stats": {
+        "aws_profile": "<aws_s3_profile_name>",
+        "bucket_name": "<aws_s3_bucket_name>",
+        "samples_file": "<s3-path-to-pleiades-metadata.gpkg>",
+        "data_dir": "<s3-path-to-dir-with-pleiades-training-data/>",
+        "scales": [256],
+        "query": "(N_BBOXES>30) & (VALID_DATA_RATIO == 1)",
+        "fraction": 1,
+        "modality": "pleiades",
+        "output_file": "<s3-path-to-pleiades-normalization-factors.csv>"
+    },
+    "execute": {
+        "datasources": {
+            "train": [
+            {
+                "modality": "pleiades",
+                "data_dir": "<s3-path-to-dir-with-pleiades-training-data/>",
+                "metadata_filename": "<pleiades-metadata-training-ready.gpkg>",
+                "normalization": {
+                    "filename": "<pleiades-normalization-factors.csv>",
+                    "modality": "pleiades"
+                },
+                "query_train": "(SUBSET == 'train')",
+                "query_cval": "(SUBSET == 'val')"
+            }, 
+            {
+                "modality": "spot",
+                "data_dir": "<s3-path-to-spot-dir-with-training-data/>",
+                "metadata_filename": "<spot-metadata-training-ready.gpkg>",
+                "normalization": {
+                    "filename": "<spot-normalization-factors.csv>",
+                    "modality": "spot"
+                },
+                "query_train": "(SUBSET == 'train')",
+                "query_cval": "(SUBSET == 'val')"
+            }],
+            "evaluate": {
+                "modality": "pleiades",
+                "data_dir": "<s3-path-to-dir-with-pleiades-training-data/>",
+                "eopatches_dir": "<s3-path-to-pleiades-eopatches-dir/>",
+                "metadata_filename": "<pleiades-metadata-training-ready.gpkg>",
+                "normalization": {
+                    "filename": "<pleiades-normalization-factors.csv>",
+                    "modality": "pleiades"
+                },
+                "query_test": null,
+                "resolution": 0.5
+            }
+        },
+        "gridding_config":
+        {
+            "bands_feature": "bands",
+            "bands": [0, 1, 2, 3],
+            "take_closest_time_frame": null,
+            "data_mask_feature": "mask",
+            "cloud_mask_feature": null,
+            "no_data_value": 0,
+            "reference_feature": "<reference>",
+            "cropped_grid_feature": "PATCHLETS",
+            "bbox_type": "obb",
+            "resolution": 0.5,
+            "scale_sizes": [128, 256, 512],
+            "valid_thr": 0.6,
+            "overlap": 0.25
+        },
+        "num_workers": 4,
+        "grid_file": "<s3-path-to-pleiades-grid-file-with-entire-aoi.gpkg>",
+        "model_dir": "<local-path-to-output-model-dir/>",
+        "aws_model_dir": "<s3-path-to-output-model-dir/>",
+        "aws_dota_dir": "<s3-path-to-output-dota-predictions-dir/>",
+        "aws_gpkg_dir": "<s3-path-to-output-gpkg-predictions-dir/>",
+        "s3_bucket_name": "<aws_s3_bucket_name>",
+        "s3_profile_name": "<aws_s3_profile_name>",
+        "image_size": 256,
+        "batch_size": 8,
+        "class_names": ["building"],
+        "lr": 1e-3,
+        "max_step": 40000,
+        "save_interval": 250,
+        "backbone": "resnet.resnet34",
+        "prior_box": {
+            "strides": [2, 4, 8, 16],
+            "sizes": [7],
+            "aspects": [1, 2, 4, 8, 16],
+            "scales": [1, 1.2599, 1.5874, 2]
+        },
+        "head_stride_1": 1,
+        "head_stride_2": 2,
+        "conf_thresh": 0.01,
+        "conf_thresh_2": 0.1,
+        "nms_thresh": 0.2,
+        "extra": 0
+    },    
+    "compute-ap": {        
+        "s3_bucket_name": "<aws_s3_bucket_name>",
+        "s3_profile_name": "<aws_s3_profile_name>",
+        "resolution": 0.5,
+        "predictions_filename": "<s3-path-to-file-with-merged-predictions.gpkg>",
+        "reference_filename": "<s3-path-to-file-with-reference-labels.gpkg>",
+        "ml_aois_filename": "<s3-path-to-file-defining-where-labels-are.gpkg>",
+        "eopatch_names": null,
+        "eopatches_dir": "<s3-path-to-pleiades-eopatches-dir/>",
+        "iou_thr": 0.2,
+        "proba_thr": 0.2,
+        "max_workers": 4,
+        "aps_filename": "<s3-path-to-file-withap-scores.csv>"
+    }
+}

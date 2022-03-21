@@ -1,0 +1,38 @@
+# pycache
+__pycache__
+
+# wandb
+wandb
+
+# notebooks
+*.ipynb_checkpoints
+
+# pycharm
+.idea/
+
+# eggs
+*.egg-info/
+
+# C extensions
+*.so
+*.cpp
+
+# build
+build/
+
+# dist
+dist/
+
+# pytest cache
+.pytest_cache/
+
+# MacOS cache
+.DS_store
+
+# .vscode
+.vscode/
+
+# test output
+tests/_data/ssrdd/test_nms/output/*
+
+Pipfile*
