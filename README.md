@@ -97,7 +97,7 @@ Check-out the inference notebook in `eo-learn-examples` for an end-to-end exampl
 
 ## Blog posts
 
-Blog posts describing the entire procedure and reporting the quantitative results will be published soon.
+[HIECTOR: Hierarchical object detector at scale](https://medium.com/sentinel-hub/hiector-hierarchical-object-detector-at-scale-5a61753b51a3) describes the entire procedure in more detail, along with validation results.
 
 Below you can find some prediction examples using Sentinel-2, Airbus SPOT and Airbus Pleiades imagery. Overlapping predictions for Sentinel-2 have been merged into single polygons.
 
